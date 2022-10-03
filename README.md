@@ -70,5 +70,5 @@ A slim excerpt of the database tables and functions is included in the sql subdi
 
 
 ### Harmonic progressions
-The [SONICS stochastic chord progression arrangement system](../tree/sonics/sequencing_melodic.udo) uses the definitions specified in files within the *progressions* directory.
+The [SONICS stochastic chord progression arrangement system](sonics/sequencing_melodic.udo) uses the definitions specified in files within the *progressions* directory.
 These are f-table dumps created by ftsave.
