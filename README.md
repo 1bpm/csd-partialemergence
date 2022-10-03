@@ -28,8 +28,12 @@ Richard Knight is a musician and data artist based in the UK. Known for his no-i
 Using spectral processing, data-driven practice and concatenative resynthesis among other techniques, Knight typically incorporates Csound to his studio workflow to create music that exists somewhere in between acousmatic and techno music.
 
 [http://rk.1bpm.net/](http://rk.1bpm.net/)
+
 [http://csound.1bpm.net/](http://csound.1bpm.net/)
+
 [https://git.1bpm.net/](https://git.1bpm.net/)
+
+
 
 ## Technical details
 
@@ -66,5 +70,5 @@ A slim excerpt of the database tables and functions is included in the sql subdi
 
 
 ### Harmonic progressions
-The [SONICS stochastic chord progression arrangement system](sonics/sequencing_melodic.udo) uses the definitions specified in files within the *progressions* directory.
+The [SONICS stochastic chord progression arrangement system](../tree/sonics/sequencing_melodic.udo) uses the definitions specified in files within the *progressions* directory.
 These are f-table dumps created by ftsave.
