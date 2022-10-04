@@ -4,6 +4,12 @@
 -m0
 -d
 </CsOptions>
+<CsLicence>
+Creative Commons Attribution-NonCommercial-ShareAlike (CC BY-NC-SA)
+</CsLicence>
+<CsShortLicence>
+2
+</CsShortLicence>
 <CsInstruments>
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 	
@@ -18,9 +24,12 @@
 
 TODO:
 
-	section 9: overlaps produce dropouts, too many mincers
-
 	Apparent memory leak in pvs opcodes
+	8 can be loud
+	9 chords are wrong, but sounds ok..
+	rmsnormal on portchord, check
+
+	double check mincer read / ft sizes in hybrid and gisounddb[x][2]
 
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -34,26 +43,16 @@ seed 0
 ; exit after specified number of seconds
 ;#define DEBUG_RUNTIME #30#  
 
-; use database, otherwise load from include/soundexport.xdb
-#define USE_DATABASE ##
-
-; path to sounds
-#define SOUND_BASE #sounds/#
-
 ; path to progressions; seems to be problematic with base path depending on where Csound is run from
-;#define PROGRESSIONPATH #progressions# ;#D:/Documents/Csound/csd-partialemergence/progressions#
-#define PROGRESSIONPATH #D:/Documents/Csound/csd-partialemergence/progressions#
+;#define PROGRESSIONPATH #D:/Documents/Csound/csd-partialemergence/progressions#
+#define PROGRESSIONPATH #progressions#
 
 ; initial progression; macro used by sequencing_melodic_persistence.udo
-#define MEL_INITPATH #$PROGRESSIONPATH/progression1.fnmlmel#
-
+#define MEL_INITPATH #$PROGRESSIONPATH/progression3.fnmlmel#
 
 ; SONICS includes
-#ifndef USE_DATABASE ; use export file if database not specified
-#include "include/soundexport.xdb"
-#end
-
-#include "sonics/sounddb.udo"
+#include "include/soundexport.xdb"  ; sound database extract
+#include "sonics/soundxdb.udo"
 #include "sonics/array_tools.udo"
 #include "sonics/sequencing.udo"
 #include "sonics/sequencing_melodic.udo"
@@ -66,7 +65,7 @@ seed 0
 #include "include/debug.inc"
 #include "include/effects_global.inc"
 #include "include/instruments_water.inc"
-#include "include/instruments_musicbox.inc"
+#include "include/instruments_idiophone.inc"
 #include "include/instruments_hybrid.inc"
 #include "include/instruments_synthesis.inc"
 #include "include/sequence_sections.inc"
@@ -84,10 +83,10 @@ seed 0
 			3 	follow section A/B chance ratio (0 = always A, 1 = always B)
 			4	action section 2
 */
-gisections[][] init 16, 5
+gisections[][] init 20, 5
 gisections fillarray\
 	60, 90,  1, 0.3, 5 ,\		; 0
-	60, 90,  2, 0.3, 6 ,\		; 1		chord music box runs with stretch chords
+	60, 90,  2, 0.3, 6 ,\		; 1		chord music box runs, alternate mel sections with stretch chords
 	60, 90,  3, 0.5, 1 ,\		; 2		bass, single note music box runs
 	60, 90,  4, 0.2, 0 ,\		; 3		bass, chord music box runs
 	60, 90,  5, 0.3, 2 ,\		; 4
@@ -101,14 +100,15 @@ gisections fillarray\
 	60, 90, 13, 0.5, 14,\		; 12	minimal, reson drops
 	60, 90, 15, 0.5, 10,\		; 13	reson drops buildup
 	60, 90,  9, 0.5,  3,\ 		; 14	low drop reson portamento chords
-	60, 90, 12, 0.5, 11			; 15	just music box chords
+	60, 90, 12, 0.5, 11,\		; 15	just music box chords
+	60, 90, 16, 0.5, 16			; 16	
 
 ; initial section
 ginitsection = 0
 
 
 ; possible melodic progressions which are files in $PROGRESSIONPATH
-gSprogressions[] fillarray "progression1.fnmlmel", "progression2.fnmlmel"
+gSprogressions[] fillarray "progression1.fnmlmel", "progression2.fnmlmel", "progression3.fnmlmel"
 gicurrentprogression init 0
 
 
@@ -199,7 +199,7 @@ instr sequencer_main
 
 		; schedule section subsequencer and print status
 		schedulek sprintfk("sequencer_s%d", ksection), 0, ksectiontime
-		printf "Section %d\n", ksection, ksection
+		printf "Section %d\n", ksection+random:k(1, 4), ksection
 
 		; set a new chord progression if relevant
 		if (random:k(0, 1) >= 0.5) then

@@ -13,35 +13,33 @@
 
 #include "sonics/bussing.udo"
 #include "include/instruments_water.inc"
-#include "include/instruments_musicbox.inc"
+#include "include/instruments_idiophone.inc"
 #include "include/instruments_synthesis.inc"
 
 
 instr sequencer_s0
-	
+	schedule("play_musicbox1", 0, i(gkseq_beattime) * i(gkmel_section_change_due), 1)
 	if (gkmel_section_change == 1) then
-		schedulek "play_musicbox1", 0, 1, 1	; single note only
+		schedulek "play_musicbox1", 0, mel_length:k(), 1	; single note only
 	endif
 	
 endin
 
 
 instr sequencer_s1
+	schedule("play_musicboxstretch1", 0, i(gkseq_beattime) * i(gkmel_section_change_due), 0)
+	schedule("play_musicbox1", 0, i(gkseq_beattime) * i(gkmel_section_change_due), 1)
 
 	kdo init 0
 	if (gkmel_section_change == 1) then
-		schedulek("play_musicboxstretch1", 0, mel_length:k()*random:k(1, 1.5), 0)
+		klen = mel_length:k()
+		schedulek("play_musicboxstretch1", 0, klen*random:k(1, 1.5), 0)
 
 		if (kdo == 0) then
-			schedulek("play_musicbox1", 0, 1, 0)	; chords
-			kdo += 1
-		elseif (kdo < 4) then
-			kdo += 1
+			schedulek("play_musicbox1", 0, klen*random:k(1, 1.3), 0)	; chords
+			kdo = 1
 		else
 			kdo = 0
-			if (random:k(0, 1) > 0.5) then
-				;event "i", "fms_playnote", 0, random:k(5, 30), -1
-			endif
 		endif
 	endif
 
@@ -51,10 +49,12 @@ endin
 instr sequencer_s2
 	
 	schedule("fms_playnote", 0, p3, 0)
+	schedule("play_musicbox1", 0, i(gkseq_beattime) * i(gkmel_section_change_due), 1)
 
 	if (gkmel_section_change == 1) then
-		schedulek("play_musicbox1", 0, 1, 1) ; single note only
-		schedulek("play_musicboxstretch1", 0, mel_length:k()*1.3, 0)
+		klen = mel_length:k()
+		schedulek("play_musicbox1", 0, klen, 1) ; single note only
+		schedulek("play_musicboxstretch1", 0, klen*1.3, 0)
 	endif
 	
 	if (lastcycle:k() == 1) then
@@ -66,10 +66,12 @@ endin
 
 instr sequencer_s3
 	schedule("fms_playnote", 0, p3, 0)
+	schedule("play_musicboxstretch1", 0, i(gkseq_beattime) * i(gkmel_section_change_due), 1)
 
 	if (gkmel_section_change == 1) then
-		schedulek("play_musicbox1", 0, 1, 0) ; chords
-		schedulek("play_musicboxstretch1", 0, mel_length:k()*0.8, 1)
+		klen = mel_length:k()
+		schedulek("play_musicbox1", 0, klen, 0) ; chords
+		schedulek("play_musicboxstretch1", 0, klen*0.8, 1)
 	endif
 
 	if (lastcycle:k() == 1) then
@@ -80,9 +82,12 @@ endin
 
 
 instr sequencer_s4
+	idiophone_change
+	schedule("playdropstretch", 0, i(gkseq_beattime) * 2 * i(gkmel_section_change_due), random(0.5, 1.5), 1, 1, 0.5)
 	if (gkmel_section_change == 1) then
-		schedulek("play_musicbox1", 0, 1, 1)	; single note only
-		schedulek("play_musicboxstretch1", 0, mel_length:k()*1.3, 1)
+		klen = mel_length:k()
+		schedulek("play_musicbox1", 0, klen, 1)	; single note only
+		schedulek("play_musicboxstretch1", 0, klen*1.3, 1)
 	endif
 endin
 
@@ -92,13 +97,13 @@ instr sequencer_s5
 	itime = 0
 	while (itime < imaxlen) do
 		idur = random(10, 40)
-		schedule("playdropstretch", itime, idur, random(0.5, 1.5), 1)
+		schedule("playdropstretch", itime, idur, random(0.5, 1.5), 1, 1, 1)
 		if (random(0, 1) > 0.5) then
-			schedule("playdropstretch", itime + random(0, 5), idur, random(0.5, 1.5), 1)
+			schedule("playdropstretch", itime + random(0, 5), idur, random(0.5, 1.5), 1, 1, 2)
 		endif
 	
 		if (random(0, 1) > 0.5) then ; no reson
-			schedule("playdropstretch", itime + random(0, 5), idur, random(0.5, 1.5), 0)
+			schedule("playdropstretch", itime + random(0, 5), idur, random(0.5, 1.5), 0, 1, 1)
 		endif
 
 		if (random(0, 1) > 0.5) then
@@ -115,7 +120,8 @@ endin
 
 
 instr sequencer_s6
-	;schedule("play_musicboxstretch2", 0, mel_length:k()*0.6, 0)
+	schedule("playdropstretch", 0, i(gkseq_beattime) * 1.5 * i(gkmel_section_change_due), random(0.5, 1.5), 0, 1, 1)
+	
 	if (gkmel_section_change == 1) then
 		;turnoff2 "play_musicboxstretch2", 0, 1
 		schedulek("play_musicboxstretch2", 0, mel_length:k()*1.3, 0)
@@ -142,14 +148,16 @@ endin
 
 
 instr sequencer_s7
+	idiophone_change()
+	schedule("playdropstretch", 0, i(gkseq_beattime) * 1.5 * i(gkmel_section_change_due), random(0.5, 1.5), 1, 1, 8)
 	if (gkmel_section_change == 1) then
 		schedulek("play_musicboxstretch2", 0, mel_length:k()*1.3, 0)
 		schedulek("waterbubbler", 0, mel_length:k(), 1)
 	endif
 
 	aL, aR bus_read "note_musicboxstretch2"
-	bus_mix("delay1", aL*0.7, aR*0.7)
-	bus_mix("main", aL, aR)
+	bus_mix("delay1", aL*0.2, aR*0.2)
+	bus_mix("main", aL*0.8, aR*0.8)
 endin
 
 
@@ -160,13 +168,13 @@ instr sequencer_s8
 	while (itime < imaxlen) do
 		idur = random(5, 20)
 		idur = (idur + itime > imaxlen) ? imaxlen - itime : idur
-		schedule("playdropstretch", itime, idur, random(0.5, 1.5), 1)
+		schedule("playdropstretch", itime, idur, random(0.5, 1.5), 1, 1, 1)
 		if (random(0, 1) > 0.5) then
-			schedule("playdropstretch", itime + random(0, 5), idur, random(0.5, 1.5), 1)
+			schedule("playdropstretch", itime + random(0, 5), idur, random(0.5, 1.5), 1, 1, 4)
 		endif
 	
 		if (random(0, 1) > 0.5) then ; no reson
-			schedule("playdropstretch", itime + random(0, 5), idur, random(0.5, 1.5), 0)
+			schedule("playdropstretch", itime + random(0, 5), idur, random(0.5, 1.5), 0, 1, 1)
 		endif
 
 		if (random(0, 1) > 0.5) then
@@ -179,6 +187,7 @@ endin
 
 
 instr sequencer_s9
+	idiophone_change()
 	gimel_portamento_beatratio = 0.2
 	imaxlen = p3
 	itime = 0
@@ -189,6 +198,7 @@ instr sequencer_s9
 		itime += idur
 	od
 endin
+
 
 instr sequencer_s10
 	gimel_portamento_beatratio = 0.4
@@ -275,7 +285,7 @@ instr sequencer_s12
 			endif
 		endif
 		if (random:k(0, 1) > 0.9) then
-			schedulek("playdropstretch", random:k(0, 3), random:k(4, 7), 2, round:k(random:k(0, 1)))
+			schedulek("playdropstretch", random:k(0, 3), random:k(4, 7), 2, round:k(random:k(0, 1)), 1, 2)
 			schedulek("fms_playnote2", random:k(0, 3), random:k(4, 5), 0)
 		endif
 	endif
@@ -284,6 +294,7 @@ endin
 
 
 instr sequencer_s13
+	idiophone_change()
 	iplaymusicbox = round(random(0, 1))
 	kmetrofreq expseg 0.3, p3, 25
 	knotemetro = metro(kmetrofreq)
@@ -337,11 +348,23 @@ endin
 
 
 instr sequencer_s15
+
+	schedule("play_musicbox1", 0, i(gkseq_beattime) * i(gkmel_section_change_due), 0)
+
+	idiophone_change()
 	if (gkmel_section_change == 1) then
-		schedulek("play_musicbox1", 0, 1, 0)	; chords
-		schedulek("play_droproll1", 0, mel_length:k(), 0.3)
+		klen = mel_length:k()
+		schedulek("play_musicbox1", 0, klen, 0)	; chords
+		schedulek("play_droproll1", 0, klen, 0.3)
 	endif
 
+endin
+
+
+instr sequencer_s16
+	gimel_portamento_beatratio = 0.7
+	schedule("play_waterpaddling1", 0, 1)
+	schedule("playdropstretch", 0, p3, 1, 1, 0, 1)
 endin
 
 #end

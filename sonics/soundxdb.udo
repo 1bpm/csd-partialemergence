@@ -78,7 +78,6 @@ endop
 */
 opcode sounddb_getcollection, i[]i, S
 	Scollection xin
-	
 	itotalsize = 0
 	if (strindex(Scollection, ",") > 0) then
 		index = 1
@@ -94,7 +93,6 @@ opcode sounddb_getcollection, i[]i, S
 				itotalsize += ftlen(gixdb_collectionsfn[icollectionid])	
 			endif
 		od
-
 		idata[] init itotalsize
 		iwriteindex = 0
 		index = 1
@@ -124,7 +122,7 @@ opcode sounddb_getcollection, i[]i, S
 		od
 
 	else
-		icollectionid = sounddb_getcollectionid(Stemp)
+		icollectionid = sounddb_getcollectionid(Scollection)
 		idata[] tab2array gixdb_collectionsfn[icollectionid]
 		igoto complete
 	endif
@@ -132,28 +130,6 @@ opcode sounddb_getcollection, i[]i, S
 complete:
 	xout idata, icollectionid
 endop
-
-
-
-
-/*
-  gixdb_pitchreference
-  	has 127 * 4 entries. get start and end indexes for gixdb_pitchnotes by
-  		index = (inote + (icollectionid * 127)) * 2 
-
- 	then values
-   		iminindex table index, gixdb_pitchreference
-   		imaxindex table index+1, gixdb_pitchreference
-   		
-   	then get the actual files which are between min and max indexes eg
-   	
-   	 	iselected = round(random(iminindex, imaxindex))
-   	 	ifileid table iselected, gixdb_pitchnotes
-   	 	ipitchadjust table iselected, gixdb_pitchadjust
-   	
-   	
-   		
-*/
 
 
 
@@ -170,7 +146,7 @@ endop
 */
 opcode sounddb_mel_nearestnote, ii, ii
 	icollectionid, inote xin
-	irefindex = ((inote - $XDB_MINNOTE) + (icollectionid * 128)) * 2 ;, gixdb_pitchreference
+	irefindex = ((inote - $XDB_MINNOTE) + tab_i(icollectionid, gixdb_pitchrefoffset)) * 2
 	iselected = round(random(tab_i(irefindex, gixdb_pitchreference), tab_i(irefindex+1, gixdb_pitchreference)))
 	ifileid tab_i iselected, gixdb_pitchnotes
 	ipitchratio tab_i iselected, gixdb_pitchadjust

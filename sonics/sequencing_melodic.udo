@@ -10,11 +10,8 @@
 		http://1bpm.net
 */
 
-
-#include "sonics/__config__.udo"		; using fftsize for tuning
 #include "sonics/chords.udo"			; chord data
 #include "sonics/sequencing.udo"		; sequencer base
-#include "sonics/wavetables.udo"		; for tuning
 
 ; if these are set, then don't launch the manager automatically. sequencing_melodic_persistence will load accordingly
 #ifdef MEL_INITPATH
@@ -48,6 +45,7 @@ gimel_next_notes ftgen 0, 0, -13, -7, 0					; next notes: index 0 is the length
 gimel_temp_random ftgen 0, 0, -gimel_number, -7, 0		; temp storage for pattern randomisation
 
 gkmel_section_change init 0								; section change trigger
+gkmel_section_change_due init 0							; how many beats until next section change
 gkmel_futures_refresh_trig init 0						; trigger to set if futures are to be recalculated
 gkmel_pause init 0										; pause progression changes
 
@@ -536,12 +534,15 @@ instr _mel_manager
 			gkmel_section_change = 1
 		endif
 		
-		if (kstep < table:k(_mel_currentsectionget:k(), gimel_lengths) - 1) then  ; current step < current length
+		ksectionlength = table:k(_mel_currentsectionget:k(), gimel_lengths)
+		gkmel_section_change_due = ksectionlength - kstep
+
+		if (kstep < ksectionlength - 1) then  ; current step < current length
 			kstep += 1
 		else
 			kstep = 0
 		endif
-
+		
 	endif ; end each beat
 	
 

@@ -10,7 +10,6 @@
 		http://1bpm.net
 */
 
-#include "sonics/__config__.udo"				; using fftsize for tuning
 #include "sonics/sequencing_melodic.udo"
 #include "sonics/wavetables.udo"
 
@@ -152,8 +151,8 @@ opcode mel_tune_portamento, aa, aaooooP
 	aL, aR, ifn, imaxmult, ifftrate, ifftdiv, kfreqmult xin
 	ifn = (ifn == 0) ? gifnSine : ifn
 	imaxmult = (imaxmult == 0) ? 4 : imaxmult
-	ifftrate = (ifftrate == 0) ? giFFTsize : ifftrate
-	ifftdiv = (ifftdiv == 0) ? giFFTwinFactor : ifftdiv
+	ifftrate = (ifftrate == 0) ? 512 : ifftrate
+	ifftdiv = (ifftdiv == 0) ? 4 : ifftdiv
 	fmods pvsanal _mel_tune_chord_portamento(kfreqmult, ifn, imaxmult), ifftrate, ifftrate/ifftdiv, ifftrate, 1
 	fL1 pvsanal aL, ifftrate, ifftrate/ifftdiv, ifftrate, 1
 	fR1 pvsanal aR, ifftrate, ifftrate/ifftdiv, ifftrate, 1

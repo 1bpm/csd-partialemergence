@@ -2,7 +2,7 @@
 #define INC_HYBRID_INSTR ##
 
 #include "include/instruments_water.inc"
-#include "include/instruments_musicbox.inc"
+#include "include/instruments_idiophone.inc"
 
 ; reson
 instr play_hybrid1
@@ -12,7 +12,7 @@ instr play_hybrid1
 	ifileid = arr_random(gisnd_waterdrop)
 
 	ifn = gisounddb[ifileid][0]
-	idur = gisounddb[ifileid][2]
+	idur = ftlen(ifn) / ftsr(ifn) / ftchnls(ifn); odd thing with mincer?? ; gisounddb[ifileid][2]
 	
 	ipitch = random(0.8, 1.6)
 
@@ -145,7 +145,7 @@ endin
 instr play_hybrid1x
 	inote = p4
 	
-	ifileidBox, ipitchBox sounddb_mel_nearestnote gicol_musicbox, inote
+	ifileidBox, ipitchBox sounddb_mel_nearestnote gicol_idiophone, inote
 	ifileidWater = arr_random(gisnd_waterdrop)
 
 	ifnBox = gisounddb[ifileidBox][0]

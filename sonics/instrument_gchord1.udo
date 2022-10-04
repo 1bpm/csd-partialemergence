@@ -10,7 +10,7 @@
 */
 #include "sonics/wavetables.udo"
 #include "sonics/sequencing_melodic_portamento.udo"
-#include "sonics/sounddb.udo"
+#include "sonics/soundxdb.udo"
 #include "sonics/frequency_tools.udo"
 #include "sonics/uniqueid.udo"
 

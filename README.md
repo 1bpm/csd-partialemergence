@@ -72,24 +72,23 @@ All instruments are defined in the files in the *include* directory prefixed wit
 
 ### Sounds
 Partial Emergence uses two groups of sounds (water and idiophones), which have two subgroups (droplets, paddling and musicbox, kalimba).
-The wave files are located in the *sounds* directory. Sound loading is handled by [sonics/sounddb.udo](sonics/sounddb.udo) which additionally utilises PostgreSQL 
-database tables and functions. 
-The tables contain the sound group details, and also notes of the tuned sounds, in order to return the nearest sound in a group to a requested note. 
-As the groups do not always cater for every available note, and some notes have multiple corresponding sounds available, database logic is used to determine the 
-most appropriate sound and calculate the required pitch adjustment ratio.
-[sonics/soundxdb.udo](sonics/soundxdb.udo) provides the same interface as [sonics/sounddb.udo](sonics/sounddb.udo) but allows offline usage based on a 
-database extract. This is currently experimental.
+The wave files are located in the *sounds* directory. Sound loading was handled [by database plugin opcodes](https://git.1bpm.net/csound-sqldb) 
+utilising PostgreSQL; however for the public release a database extract is provided in the slightly unwieldy but functional [include/soundexport.xdb](include/soundexport.xdb).
+The source database tables contain the sound group details, and also notes of the tuned sounds, in order to return the nearest sound in a group to 
+a requested note. 
+As the groups do not always cater for every available note, and some notes have multiple corresponding sounds available, database logic is used to 
+determine the most appropriate sound and calculate the required pitch adjustment ratio. The extract in [include/soundexport.xdb](include/soundexport.xdb)
+features a set of arrays and f-tables that mimic what the database would return. For each sound collection, *gixdb_pitchreference* stores a reference
+for all possible MIDI notes (0 to 127) which is accessed by a collection specific offset held in *gixdb_pitchrefoffset*. The values returned from
+*gixdb_pitchreference* then point to the upper and lower bounds in *gixdb_pitchnotes* and *gixdb_pitchadjust* which contain the index in *gisounddb*
+and the pitch adjustment ratio required in order to match the requested note. This fulfillment of such a request is carried out by 
+*sounddb_mel_nearestnote* in [sonics/soundxdb.udo](sonics/soundxdb.udo).
 
 
 ### Instruments
 Instruments are broadly split into those that use the tuned idiophone parts, and those that use the untuned water droplets. Additionally there are some synthesis 
 instruments, and also notably a number of hybrid approaches to tuning/detuning the source sounds, yielding to the installation concept (for example, using 
 the *resony* and *pvsmorph* opcodes).
-
-
-### Database
-A slim excerpt of the database tables and functions is included in the sql subdirectory. The [relevant README.md file](sql/README.md) contains information on 
-how to restore the database if you should wish to deploy locally.
 
 
 ### Harmonic progressions

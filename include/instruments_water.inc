@@ -11,7 +11,7 @@
 
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "sonics/sounddb.udo"
+#include "sonics/soundxdb.udo"
 #include "sonics/array_tools.udo"
 #include "sonics/sequencing_melodic.udo"
 #include "sonics/sequencing_melodic_portamento.udo"
@@ -164,8 +164,10 @@ endin
 
 
 instr playdropstretch
-	ipitch = p4
+	ireadpitch = p4
 	ido_reson = p5
+	ifades = p6
+	iresonfreqratio = p7
 	ifileid = arr_random(gisnd_waterdrop)
 	ifn = gisounddb[ifileid][0]
 	idur = gisounddb[ifileid][2]
@@ -173,16 +175,21 @@ instr playdropstretch
 	iend = random(idur*0.3, idur*0.5)
 	atime = abs(oscil(iend-istart, random(0.001, 0.1), gifnSine, random(0, 1))) ; + istart ; needed???
 
-	aL, aR sndwarpst 1, atime, ipitch, ifn, istart, 441*random(1, 10), 44*random(1, 10), 8, gifnHalfSine, 1
-	kamp linseg 0, p3*0.25, 1, p3*0.5, 1, p3*0.25, 0
+	aL, aR sndwarpst 1, atime, ireadpitch, ifn, istart, 441*random(1, 10), 44*random(1, 10), 8, gifnHalfSine, 1
+
+	if (ifades == 1) then
+		kamp linseg 0, p3*0.25, 1, p3*0.5, 1, p3*0.25, 0
+	else
+		kamp linsegr 1, p3, 1, 2, 0
+	endif
 	aL *= kamp
 	aR *= kamp
 	
 	if (ido_reson == 1) then
-		aLr resony aL, table:k(0, gimel_freqs)*2, 4, 16, 10
-		aRr resony aL, table:k(0, gimel_freqs)*4, 4, 16, 10
-		aL balance aLr, aL
-		aR balance aRr, aR
+		aLr resony aL, table:k(0, gimel_freqs)*2*iresonfreqratio, 2, 16, 10
+		aRr resony aL, table:k(0, gimel_freqs)*4*iresonfreqratio, 2, 16, 10
+		aL balance butterhp(aLr, 60), aL
+		aR balance butterhp(aRr, 60), aR
 	endif
 	
 	aL pareq aL, 1000, 0.4, 0.75
@@ -191,36 +198,5 @@ instr playdropstretch
 	bus_mix("master", aL, aR)
 endin
 
-/*
-instr playclayrummagetretch
-	ipitch = p4
-	ipitchend = ipitch * random(0.5, 1)
-	kpitch line ipitch, p3, ipitchend
-	ifileid = arr_random(gisnd_clayrummage)
-	ifn = gisounddb[ifileid][0]
-	idur = gisounddb[ifileid][2]
-	istart = random(0, idur*0.2)
-	iend = random(idur*0.3, idur*0.5)
-	atime = abs(oscil(iend-istart, random(0.001, 0.1), gifnSine, random(0, 1))) ; + istart ; needed???
-
-	aL, aR sndwarpst 1, atime, kpitch, ifn, istart, 441*random(60, 100), 44*random(6, 10), 4, gifnHalfSine, 1
-	kamp linseg 0, p3*0.25, 1, p3*0.5, 1, p3*0.25, 0
-	aLx exciter aL, 3000, 20000, 10, 10
-	aRx exciter aR, 3000, 20000, 10, 10
-
-	aL pareq aL, 1200, 0.6, 0.6
-	aR pareq aR, 1200, 0.6, 0.6
-
-	aL pareq aL, 120, 6, 0.6
-	aR pareq aR, 120, 6, 0.6
-
-	aL += aLx
-	aR += aRx
-	aL, aR mel_tune_portamento aL, aR
-	aL *= kamp
-	aR *= kamp
-	bus_mix("master", aL, aR)
-endin
-*/
 
 #end

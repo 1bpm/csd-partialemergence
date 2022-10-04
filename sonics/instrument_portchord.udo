@@ -9,54 +9,11 @@
 		http://1bpm.net
 */
 
-#include "sonics/__config__.udo"
 #include "sonics/sequencing_melodic_persistence.udo"
 #include "sonics/sequencing_melodic_portamento.udo"
 #include "sonics/wavetables.udo"
-#include "sonics/sounddb.udo"
+#include "sonics/soundxdb.udo"
 
-
-/*
-	Play continuous chords from melodic sequencer with portamento, using oscil as an instrument and a specified wavetable
-
-	aL, aR portchord_wave [iwavefn=gifnSine, ifreqmult=1, ivibdepth=1, ivibrate=3, index=0]
-
-	aL, aR			stereo outputs
-	iwavefn			the f-table to use with oscil
-	ifreqmult		frequency multiplier of the chord note frequencies to be applied
-	ivibdepth		vibrato depth
-	ivibrate		vibrato rate in Hz
-	index			internal start index of the chord notes; could also be used to specify starting note offset
-*/
-opcode portchord_wave, aa, jpjjo
-	iwavefn, ifreqmult, ivibdepth, ivibrate, index xin
-	
-	iwavefn = (iwavefn == -1) ? gifnSine : iwavefn
-	ivibdepth = (ivibdepth == -1) ? 1 : ivibdepth
-	ivibrate = (ivibrate == -1) ? 3 : ivibrate
-
-	kamp table index, gimel_amps
-	kfreq table index, gimel_freqs
-
-	klfo = oscil:k(ivibdepth, ivibrate) ;oscil:k(7, 5)
-	kfreq += klfo
-	kfreq *= ifreqmult
-
-	;kamp portk kamp, (i(gkseq_beattime) * gimel_portamento_beatratio) ; fade out when change
-
-	aL oscil kamp*0.1, kfreq, iwavefn
-	ipan = random(0, 1)
-	aR = aL * ipan
-	aL *= (1 - ipan)
-
-	if (index + 1 < ftlen(gimel_amps)) then
-		aLx, aRx portchord_wave iwavefn, ifreqmult, ivibdepth, ivibrate, index + 1
-		aL += aLx
-		aR += aRx
-	endif
-
-	xout aL, aR
-endop
 
 
 
@@ -75,7 +32,7 @@ endop
 opcode portchord_sound, aa, ippjo
 	icollectionid, imode, ifreqmult, ifftsize, index xin
 
-	ifftsize = (ifftsize == -1) ? giFFTsize : ifftsize
+	ifftsize = (ifftsize == -1) ? 512 : ifftsize
 
 	inote = round(random(50, 80))
 	ibasefreq = cpsmidinn(inote)
@@ -95,13 +52,13 @@ opcode portchord_sound, aa, ippjo
 
 	istart = random(0.05, 0.2)
 	iend = random(istart+0.1, 0.8) 
-	atime = abs(oscil(iend - istart, random(0.001, 0.1), gifnSine, random(0, 1))) + istart
-
-
-	klfo = oscil:k(random(0.0001, 0.009), random(1, 5)) + 1
-	kpitch *= klfo
+	
 
 	if (kamp != 0) then
+		atime = abs(oscil(iend - istart, random(0.001, 0.1), gifnSine, random(0, 1))) + istart
+		klfo = oscil:k(random(0.0001, 0.009), random(1, 5)) + 1
+		kpitch *= klfo
+
 		if (imode == 0) then
 			kpitch *= (ftsr(ifn) / sr) ; adjustment for sndwarp required
 			
@@ -129,5 +86,8 @@ opcode portchord_sound, aa, ippjo
 	endif
 	xout aL, aR
 endop
+
+
+
 
 #end

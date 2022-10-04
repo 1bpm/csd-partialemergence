@@ -11,7 +11,7 @@
 
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "sonics/sounddb.udo"
+#include "sonics/soundxdb.udo"
 #include "sonics/array_tools.udo"
 #include "sonics/sequencing_melodic.udo"
 #include "sonics/sequencing_melodic_portamento.udo"
@@ -20,9 +20,20 @@
 #include "sonics/instrument_portchord.udo"
 #include "sonics/instrument_gchord1.udo"
 
+
 ; sound collections
-gifid_musicbox[], gicol_musicbox sounddb_getcollection "MusicBox"
-;gifid_musicbox[], gicol_musicbox sounddb_getcollection "Kalimba"
+gicol_musicbox sounddb_getcollectionid "MusicBox"
+gicol_kalimba sounddb_getcollectionid "Kalimba"
+gicol_idiophone = gicol_musicbox
+
+
+opcode idiophone_change, 0, 0
+	if (random(0, 1) >= 0.5) then
+		gicol_idiophone = gicol_musicbox
+	else
+		gicol_idiophone = gicol_kalimba
+	endif
+endop
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 
@@ -38,8 +49,6 @@ gifid_musicbox[], gicol_musicbox sounddb_getcollection "MusicBox"
 */
 instr play_musicbox1
 	ionenote = p4
-	ilen = mel_length() * random(1, 1.5)
-	p3 = ilen
 
 	if (ionenote == 1) then
 		knote init mel_randomnote() + (round(random(-2, 4)) * 12)
@@ -52,7 +61,7 @@ instr play_musicbox1
 		ifreqstart = random(2, 10)
 		ifreqend = random(20, 40)
 	endif
-	kfreq linseg ifreqstart, ilen, ifreqend
+	kfreq linseg ifreqstart, p3, ifreqend
 
 	kamp linseg 1, p3, 0
 	if (random(0, 1) > 0.5) then
@@ -161,9 +170,10 @@ instr play_musicboxstretch3
 	kampx4 init 0
 	kamp linsegr 1, p3, 1, 1, 0
 
-	aL1, aR1 portchord_sound gicol_musicbox, 1, 0.5, 512
-	aL2, aR2 portchord_sound gicol_musicbox, 1, 1, 1024
-	aL3, aR3 portchord_sound gicol_musicbox, 1, 2, 512
+	aL1, aR1 portchord_sound gicol_idiophone, 1, 0.5, 512
+	aL2, aR2 portchord_sound gicol_idiophone, 1, 1, 1024
+	aL3, aR3 portchord_sound gicol_idiophone, 1, 2, 512
+
 	aL = (aL3 * portk(kampx4, 2) + (aL1 + aL2)) * kamp
 	aR = (aR3 * portk(kampx4, 2) + (aR1 + aR2)) * kamp
 
@@ -204,8 +214,8 @@ instr play_musicboxstretch4
 
 	ichangechance = random(0.1, 0.6)
 	icompressmode = 2
-	aL1, aR1 fnmi_gchord1 gicol_musicbox, 1, 3, icompressmode, ichangechance, 2, 1
-	aL2, aR2 fnmi_gchord1 gicol_musicbox, 1, 3, icompressmode, ichangechance, 0.5, 1
+	aL1, aR1 fnmi_gchord1 gicol_idiophone, 1, 3, icompressmode, ichangechance, 2, 1
+	aL2, aR2 fnmi_gchord1 gicol_idiophone, 1, 3, icompressmode, ichangechance, 0.5, 1
 
 	klpf1p port klpf1, 3
 	klpf2p port klpf2, 3
@@ -288,7 +298,7 @@ instr _note_musicbox1
 	iamp *= random(0.6, 1)
 	kamp linseg iamp, p3*0.6, iamp, p3*0.4, 0
 
-	ifileid, ipitchratio sounddb_mel_nearestnote gicol_musicbox, inote
+	ifileid, ipitchratio sounddb_mel_nearestnote gicol_idiophone, inote
 
 	if (ipitchratio > 1.8 || random(0, 1) > 0.8) then
 		iloscilratio = 1
@@ -359,7 +369,7 @@ instr note_musicbox2
 
 	iamp *= random(0.6, 1)
 	kamp linseg iamp, p3*0.6, iamp, p3*0.4, 0
-	ifileid, ipitchratio sounddb_mel_nearestnote gicol_musicbox, inote
+	ifileid, ipitchratio sounddb_mel_nearestnote gicol_idiophone, inote
 
 	kpitchratio init ipitchratio * ipitchscale
 
@@ -430,7 +440,7 @@ instr note_musicboxstretch1
 	imode = p5
 	iamp = 0.6
 	kamp linseg 0, p3*0.2, iamp, p3*0.6, iamp, p3*0.2, 0
-	ifileid, ipitchratio sounddb_mel_nearestnote gicol_musicbox, inote
+	ifileid, ipitchratio sounddb_mel_nearestnote gicol_idiophone, inote
 	ifn = gisounddb[ifileid][0]
 	idur = gisounddb[ifileid][2]
 	ipitchratio *= (ftsr(ifn) / sr) ; adjustment for sndwarp required
@@ -438,11 +448,11 @@ instr note_musicboxstretch1
 	if (imode == 0) then
 		istart = random(0, 0.3)
 		iend = random(istart+0.1, 0.5)
-		atime = abs(oscil(iend-istart, random(0.001, 0.1), gifnSine, random(0, 1))) + istart  ; TODO: don't think + istart is required here
+		atime = abs(oscil(iend-istart, random(0.001, 0.1), gifnSine, random(0, 1))) 
 	else
 		istart = 0
 		iend = random(0.1, 0.99)
-		atime = (phasor(random(10, 40)) * (iend-istart)) + istart
+		atime = (phasor(random(10, 40)) * (iend-istart))
 	endif
 	
 
@@ -455,7 +465,7 @@ instr note_musicboxstretch1
 	
 	atime *= idur
 
-	aL, aR sndwarpst kamp, atime, apitchratio, ifn, istart, 441*random(1, 100), 44*random(1, 10), 8, gifnHalfSine, 1
+	aL, aR sndwarpst kamp, atime*idur, apitchratio, ifn, istart, 441*random(1, 100), 44*random(1, 10), 8, gifnHalfSine, 1
 
 	aL butterhp aL, 150
 	aR butterhp aR, 150
@@ -492,18 +502,18 @@ instr _note_musicboxstretch2
 	ilpmode = p6
 	iamp = 0.4
 	kamp linseg 0, p3*0.2, iamp, p3*0.6, iamp, p3*0.2, 0
-	ifileid, ipitchratio sounddb_mel_nearestnote gicol_musicbox, inote
+	ifileid, ipitchratio sounddb_mel_nearestnote gicol_idiophone, inote
 	ifn = gisounddb[ifileid][0]
 	idur = gisounddb[ifileid][2]
 
 	if (imode == 0) then
 		istart = random(0.05, 0.2)
 		iend = random(istart+0.1, 0.8) 
-		atime = abs(oscil(iend-istart, random(0.001, 0.1), gifnSine, random(0, 1)))  + istart; TODO: don't think + istart is required here
+		atime = abs(oscil(iend-istart, random(0.001, 0.1), gifnSine, random(0, 1)))
 	else
 		istart = 0
 		iend = random(0.1, 0.99)
-		atime = (phasor(random(10, 40)) * (iend-istart)) + istart
+		atime = (phasor(random(10, 40)) * (iend-istart))
 	endif
 	
 	if (random(0, 1) > 0.4) then
@@ -515,7 +525,7 @@ instr _note_musicboxstretch2
 
 	atime *= idur
 
-	aL, aR mincer atime, kamp, k(apitchratio), ifn, 0, 2048
+	aL, aR mincer atime*idur, kamp, k(apitchratio), ifn, 0, 2048
 	
 	ipan = random(0, 1)
 	aL *= (1-ipan)
