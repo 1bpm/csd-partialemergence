@@ -18,58 +18,44 @@ Creative Commons Attribution-NonCommercial-ShareAlike (CC BY-NC-SA)
 
 	Installation submission for the International Csound Conference 2022
 
-	Entry point
-
-
-
-TODO:
-
-	Apparent memory leak in pvs opcodes
-	8 can be loud
-	9 chords are wrong, but sounds ok..
-	rmsnormal on portchord, check
-
-	double check mincer read / ft sizes in hybrid and gisounddb[x][2]
-
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-
 sr = 44100
-ksmps = 64
+ksmps = 128
 nchnls = 2
-0dbfs  = 4
+0dbfs  = 2.5
 seed 0
 
-; exit after specified number of seconds
-;#define DEBUG_RUNTIME #30#  
+; set DEBUG to enable lag detection and linear progression
+;#define DEBUG ##
 
-; path to progressions; seems to be problematic with base path depending on where Csound is run from
-;#define PROGRESSIONPATH #D:/Documents/Csound/csd-partialemergence/progressions#
+; path to progressions
 #define PROGRESSIONPATH #progressions#
 
 ; initial progression; macro used by sequencing_melodic_persistence.udo
-#define MEL_INITPATH #$PROGRESSIONPATH/progression3.fnmlmel#
+#define MEL_INITPATH #$PROGRESSIONPATH/progression1.fnmlmel#
 
 ; SONICS includes
 #include "include/soundexport.xdb"  ; sound database extract
-#include "sonics/soundxdb.udo"
-#include "sonics/array_tools.udo"
+#include "sonics/soundxdb.udo"							
+#include "sonics/array_tools.udo"						
 #include "sonics/sequencing.udo"
 #include "sonics/sequencing_melodic.udo"
 #include "sonics/sequencing_melodic_portamento.udo"
 #include "sonics/sequencing_melodic_persistence.udo"
 #include "sonics/bussing.udo"
 #include "sonics/instrument_sineblips.udo"
+#ifdef DEBUG
+#include "sonics/lagdetect.udo"
+#endif
 
 ; installation specific includes
-#include "include/debug.inc"
 #include "include/effects_global.inc"
 #include "include/instruments_water.inc"
 #include "include/instruments_idiophone.inc"
 #include "include/instruments_hybrid.inc"
 #include "include/instruments_synthesis.inc"
 #include "include/sequence_sections.inc"
-
 
 
 /*
@@ -83,25 +69,50 @@ seed 0
 			3 	follow section A/B chance ratio (0 = always A, 1 = always B)
 			4	action section 2
 */
-gisections[][] init 20, 5
-gisections fillarray\
-	60, 90,  1, 0.3, 5 ,\		; 0
-	60, 90,  2, 0.3, 6 ,\		; 1		chord music box runs, alternate mel sections with stretch chords
-	60, 90,  3, 0.5, 1 ,\		; 2		bass, single note music box runs
-	60, 90,  4, 0.2, 0 ,\		; 3		bass, chord music box runs
-	60, 90,  5, 0.3, 2 ,\		; 4
-	60, 90,  6, 0.3, 8 ,\		; 5		drop stretch, resonated
-	60, 90,  7, 0.5, 4 ,\		; 6		tuned drops, stretch chords
-	60, 90,  8, 0.7, 0 ,\		; 7		tuned drops, stretch chords more prominent
-	60, 90,  0, 0.7, 3 ,\		; 8		drop stretch
-	60, 90,  9, 0.5, 9 ,\		; 9		low portamento chords
-	60, 90, 10, 0.5, 5 ,\		; 10	glitch chord
-	60, 90,  5, 0.5, 4 ,\		; 11	water drops, low minimal chords, resonated drops, stretch water
-	60, 90, 13, 0.5, 14,\		; 12	minimal, reson drops
-	60, 90, 15, 0.5, 10,\		; 13	reson drops buildup
-	60, 90,  9, 0.5,  3,\ 		; 14	low drop reson portamento chords
-	60, 90, 12, 0.5, 11,\		; 15	just music box chords
-	60, 90, 16, 0.5, 16			; 16	
+gisections[][] init 18, 5
+
+#ifdef DEBUG  
+gisections fillarray\           ;       test linear progression
+	60, 90,  1, 0.3, 1 ,\		; 0		idiophone single notes
+	60, 90,  2, 0.3, 2 ,\		; 1		idiophone chords, alternate mel sections with stretch chords
+	60, 90,  3, 0.5, 3 ,\		; 2		bass, idiophone single notes
+	60, 90,  4, 0.2, 4 ,\		; 3		bass, idiophone chords
+	60, 90,  5, 0.3, 5 ,\		; 4		resonated drop stretch and idiophone notes/stretch
+	60, 90,  6, 0.3, 6 ,\		; 5		resonated drop stretch
+	60, 90,  7, 0.5, 7 ,\		; 6		tuned drops, stretch chords
+	60, 90,  8, 0.7, 8 ,\		; 7		tuned drops, stretch chords more prominent
+	60, 90,  9, 0.7, 9 ,\		; 8		drop stretch
+	60, 90, 10, 0.5, 10,\		; 9		low portamento chords
+	60, 90, 11, 0.5, 11,\		; 10	glitch chord, sines, drops
+	60, 90, 12, 0.5, 12,\		; 11	water drops, low minimal chords, resonated drops, stretch water
+	60, 90, 13, 0.5, 13,\		; 12	minimal, resonated drops
+	60, 90, 14, 0.5, 14,\		; 13	reson drops buildup
+	60, 90, 15, 0.5, 15,\ 		; 14	low drop resonated portamento chords
+	60, 90, 16, 0.2, 16,\		; 15	water to idiophone 
+	60, 90, 17, 0.5, 17,\		; 16	idiophone/drop resonated chords, slower
+	30, 60,  0, 0.5, 0			; 17	water paddling hits, resonated drop stretch
+
+#else 
+gisections fillarray\          ;     live progression
+	43  ,95  ,1  ,0.2  ,2  ,\  ;  0  idiophone single notes
+	63  ,125 ,2  ,0.3  ,12 ,\  ;  1  idiophone chords, alternate mel sections with stretch chords
+	42  ,110 ,3  ,0.2  ,4  ,\  ;  2  bass, idiophone single notes
+	76  ,134 ,4  ,0.2  ,5  ,\  ;  3  bass, idiophone chords
+	61  ,92  ,5  ,0.15 ,13 ,\  ;  4  resonated drop stretch and idiophone notes/stretch
+	57  ,93  ,11 ,0.2  ,6  ,\  ;  5  resonated drop stretch
+	47  ,105 ,5  ,0.8  ,7  ,\  ;  6  tuned drops, stretch chords
+	61  ,101 ,14 ,0.7  ,8  ,\  ;  7  tuned drops, stretch chords more prominent
+	67  ,105 ,5  ,0.8  ,9  ,\  ;  8  drop stretch
+	53  ,113 ,13 ,0.4  ,1  ,\  ;  9  low portamento chords
+	65  ,124 ,15 ,0.3  ,0  ,\  ; 10	 glitch chord, sines, drops
+	58  ,113 ,8  ,0.5  ,12 ,\  ; 11	 water drops, low minimal chords, resonated drops, stretch water
+	81  ,153 ,15 ,0.5  ,14 ,\  ; 12	 minimal, resonated drops
+	69  ,112 ,17 ,0.8  ,10 ,\  ; 13	 reson drops buildup
+	62  ,103 ,3  ,0.4  ,9  ,\  ; 14	 low drop resonated portamento chords
+	54  ,101 ,16 ,0.2  ,5  ,\  ; 15	 water to idiophone 
+	71  ,116 ,17 ,0.4  ,4  ,\  ; 16	 idiophone/drop resonated chords, slower
+	33  ,66  ,6  ,0.5  ,7	   ; 17	 water paddling hits, resonated drop stretch
+#endif
 
 ; initial section
 ginitsection = 0
@@ -110,7 +121,6 @@ ginitsection = 0
 ; possible melodic progressions which are files in $PROGRESSIONPATH
 gSprogressions[] fillarray "progression1.fnmlmel", "progression2.fnmlmel", "progression3.fnmlmel"
 gicurrentprogression init 0
-
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -125,7 +135,7 @@ gicurrentprogression init 0
 */
 instr boot
 	gkseq_tempo init 100
-	SbootInstrs[] fillarray "global_delay1", "global_delay2", "global_reverb1", "audio_output", "sequencer_main", "global_pvsamp1"
+	SbootInstrs[] fillarray "audio_output", "sequencer_main", "global_delay1", "global_delay2", "global_reverb1", "global_pvsamp1"
 	index = 0
 	while (index < lenarray(SbootInstrs)) do
 		schedule(SbootInstrs[index], 0, -1)
@@ -167,6 +177,7 @@ instr set_progression
 endin
 
 
+
 /*
 	Main section sequencer
 */
@@ -177,7 +188,7 @@ instr sequencer_main
 	ksection init ginitsection
 	ksectiontime init initduration
 	schedule(sprintf("sequencer_s%d", ginitsection), 0, initduration)
-	prints sprintf("Start: section %d\n", ginitsection)
+	prints sprintf("Section %d\n", ginitsection)
 
 	; react to section changes at k-rate
 	kabstime timeinsts
@@ -195,7 +206,7 @@ instr sequencer_main
 		endif
 
 		; get duration between specified min and max
-		ksectiontime = random:k(gisections[ksection][0], gisections[ksection][1])
+		ksectiontime = random:k(gisections[ksection][0], gisections[ksection][1]) + random:k(0.5, 1)
 
 		; schedule section subsequencer and print status
 		schedulek sprintfk("sequencer_s%d", ksection), 0, ksectiontime
@@ -212,12 +223,19 @@ instr sequencer_main
 
 		klaststarttime = kabstime
 	endif
-	
+
+#ifdef DEBUG
+	; write lag detection report for debugging
+	if (lagdetect:k() == 1) then
+		fprintks "lagreport.txt", "Lag in section %d at %f\n", ksection, kabstime - klaststarttime
+	endif
+#endif
+
 endin
 
 </CsInstruments>
 <CsScore>
 f0 z
-i"boot" 0.5 1 ; slight delay to account for initial melodic progression load
+i"boot" 0.5 1 ; delay to account for initial melodic progression load
 </CsScore>
 </CsoundSynthesizer>

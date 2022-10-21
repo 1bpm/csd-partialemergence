@@ -47,7 +47,7 @@ instr _fnmi_sineblip
 	else
 		kamp linseg 1, p3*0.9, 1, p3*0.1, 0
 	endif
-	bus_mix(Sbus, aL*0.6*kamp, aR*0.6*kamp)
+	bus_mix(Sbus, aL*0.3*kamp, aR*0.3*kamp)
 endin
 
 

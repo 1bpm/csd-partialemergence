@@ -526,7 +526,7 @@ instr _mel_manager
 
 	
 	; do something with gkmel_pause == 0
-	if (gkseq_beat == 1) then
+	if (gkseq_beat == 1 && gkmel_pause = 0) then
 		if (kstep == 0) then
 			tablecopy gimel_current_notes, gimel_next_notes
 			kcurrent = _mel_future_pop:k()

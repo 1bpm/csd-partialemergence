@@ -3,26 +3,34 @@
 
 #include "include/instruments_water.inc"
 #include "include/instruments_idiophone.inc"
+#include "sonics/array_tools.udo"
+#include "sonics/wavetables.udo"
+#include "sonics/soundxdb.udo"
+#include "sonics/sequencing_melodic.udo"
 
 ; reson
-instr play_hybrid1
+instr note_hybrid1
 	inote = p4
 	
 	ifreq = cpsmidinn(inote)
 	ifileid = arr_random(gisnd_waterdrop)
 
 	ifn = gisounddb[ifileid][0]
-	idur = ftlen(ifn) / ftsr(ifn) / ftchnls(ifn); odd thing with mincer?? ; gisounddb[ifileid][2]
+	idur = gisounddb[ifileid][2]
 	
 	ipitch = random(0.8, 1.6)
 
-	itdur = (idur / ipitch) + random(0.3, 1)
+	itdur = (idur / ipitch) + random(0.2, 0.5)
 	p3 = itdur
 	;aL, aR loscil 1, ipitch, ifn, 1
 	atime line 0, p3, idur*0.9
 	aL, aR mincer atime, 1, ipitch, ifn, 0, 128 ; 1024
 	aLr resony aL, ifreq, 2, random(8, 16), 10
 	aRr resony aL, ifreq, 2, random(8, 16), 10
+
+	aLr pareq aLr, ifreq, 0.4, 0.7
+	aRr pareq aRr, ifreq, 0.4, 0.7
+
 	aL balance aLr, aL
 	aR balance aRr, aR
 	aL dcblock aL
@@ -41,11 +49,69 @@ instr play_hybrid1
 endin
 
 
+instr phrase_hybrid1
+	if (random(0, 1) > 0.5) then
+		ifreqstart = random(1, 10)
+		ifreqend = random(1, 10)
+	else
+		ifreqstart = random(1, 10)
+		ifreqend = random(1, 10)
+	endif
+	kfreq linseg ifreqstart, p3, ifreqend
+	
+	kamp init 1
+	ktrig metro kfreq
+	if (ktrig == 1) then
+		knote = min:k(mel_randomnote:k() + (round:k(random:k(-2, 2)) * 12), 127)
+		if (random:k(0, 1) >= 0.5) then
+			schedulek("note_idiophone1", random:k(0, 0.1), 0.1, knote, kamp*2)
+		else
+			schedulek("note_hybrid1", random:k(0, 0.1), 0.1, knote)
+		endif
+	endif
+endin
 
 
+/*
+	Chord changing from idiophone to drops
+	
+	p4		one note (0 = play one note, 1 = play chord)
+*/
+instr phrase_hybrid2
+	ionenote = p4
 
-opcode portchord_drop, aa, po
-	ifreqmult, index xin
+	if (ionenote == 1) then
+		knote init mel_randomnote() + (round(random(-2, 4)) * 12)
+	endif
+
+	if (random(0, 1) > 0.5) then
+		ifreqstart = random(10, 30)
+		ifreqend = random(2, 10)
+	else
+		ifreqstart = random(2, 10)
+		ifreqend = random(10, 30)
+	endif
+	kfreq linseg ifreqstart, p3, ifreqend
+
+	kamp linseg 0, p3*0.1, 1, p3*0.8, 1, p3*0.1, 0
+	ktransition line 1, p3, 0
+
+	ktrig metro kfreq
+	if (ktrig == 1) then
+		if (random:k(0, 1) >= ktransition) then
+			if (ionenote != 1) then
+				knote = mel_randomnote:k() + (round:k(random:k(-2, 4)) * 12)
+			endif
+			schedulek("note_idiophone1", random:k(0, 0.1), 0.1, min:k(knote, 127), kamp*2)
+		else
+			schedulek("note_drop1", random:k(0, 0.1), 0.1)
+		endif
+	endif
+endin
+
+
+opcode portchord_drop, aa, iio
+	ifreqmult, ireadmode, index xin
 
 	ifileid = arr_random(gisnd_waterdrop)
 	ifftsize = 16
@@ -72,13 +138,13 @@ opcode portchord_drop, aa, po
 	aL init 0
 	aR init 0
 	if (kamp != 0) then
-		if (random(0, 1) > 0.4) then
-			aLm, aRm mincer atime, kamp, kpitch, ifn, 0, ifftsize
+		if (ireadmode == 0) then
+			aLm, aRm mincer atime*idur, kamp, kpitch, ifn, 0, ifftsize
 		else
 			aLm, aRm sndwarpst kamp, atime*idur, kpitch, ifn, 0, 4410, 441, 8, gifnHalfSine, 1
 		endif
-		aL resony aLm, kfreq*ifreqmult, random(1, 4), random(8, 16), 10
-		aR resony aRm, kfreq*ifreqmult, random(1, 4), random(8, 16), 10
+		aL resony aLm, kfreq*ifreqmult, 2, random(8, 16), 10
+		aR resony aRm, kfreq*ifreqmult, 2, random(8, 16), 10
 		aL balance aL, aLm
 		aR balance aR, aRm
 		aL butterhp aL, 210
@@ -86,33 +152,36 @@ opcode portchord_drop, aa, po
 	endif
 	ipan = random(0, 1)
 
-	aL *= (1 - irmsnorm) * 0.5 * ipan
-	aR *= (1 - irmsnorm) * 0.5 * (1-ipan)
+	;aL *= (1 - irmsnorm) * 0.5 * ipan
+	;aR *= (1 - irmsnorm) * 0.5 * (1-ipan)
 
 	; recursion for all chord parts
 	if (index + 1 < ftlen(gimel_amps)) then
-		aLx, aRx portchord_drop ifreqmult, index + 1
+		aLx, aRx portchord_drop ifreqmult, ireadmode, index + 1
 		aL += aLx
 		aR += aRx
 	endif
 	xout aL, aR
 endop
 
-instr play_hybridstretch1
+
+
+instr phrase_hybridstretch1
 	kamp linsegr 1, p3, 1, 1, 0
 	kampx3 init 0.2
 	kreverb1 init 0
 	kreverb2 init 0
 	kreverb3 init 0
-
-	aL1, aR1 portchord_drop 0.5
-	aL2, aR2 portchord_drop 1
-	aL3, aR3 portchord_drop 4
+	aL1, aR1 portchord_drop 0.5, 1
+	;aL2, aR2 portchord_drop 1, 1
+	aL3, aR3 portchord_drop 4, 1
 	k3amp = abs:k(oscil:k(1, 0.1))
 
-	aL = (aL1 + aL2 + (aL3 * port(k3amp, 1))) * kamp
-	aR = (aR1 + aR2 + (aR3 * port(k3amp, 1))) * kamp
+	;aL = (aL1 + aL2 + (aL3 * port(k3amp, 1))) * kamp
+	;aR = (aR1 + aR2 + (aR3 * port(k3amp, 1))) * kamp
 
+	aL = (aL1 + (aL3 * port(k3amp, 1))) * kamp
+	aR = (aR1 + (aR3 * port(k3amp, 1))) * kamp
 
 	kchangemetro = metro(0.2)
 	if (kchangemetro == 1) then
@@ -134,15 +203,15 @@ instr play_hybridstretch1
 	aR pareq aR, 1000, 0.4, 0.7
 
 	bus_mix("reverb1", aL1*kreverb1, aR1*kreverb1)
-	bus_mix("reverb1", aL2*kreverb2, aR2*kreverb2)
-	bus_mix("reverb1", aL2*kreverb3, aR3*kreverb3)
+	;bus_mix("reverb1", aL2*kreverb2, aR2*kreverb2)
+	bus_mix("reverb1", aL3*kreverb3, aR3*kreverb3)
 	bus_mix("master", aL, aR)
 endin
 
 
-
+/*
 ; pvsmorph
-instr play_hybrid1x
+instr note_hybrid1x
 	inote = p4
 	
 	ifileidBox, ipitchBox sounddb_mel_nearestnote gicol_idiophone, inote
@@ -180,5 +249,6 @@ instr play_hybrid1x
 	bus_mix("reverb1", aL*random(0, 0.1), aR*random(0, 0.1))
 	bus_mix("master", aL, aR)
 endin
+*/
 
 #end

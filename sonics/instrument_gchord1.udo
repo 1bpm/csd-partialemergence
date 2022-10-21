@@ -145,8 +145,8 @@ instr _fnmi_gchord1_notehold
 		ilen = ftlen(ifn) / ftsr(ifn)
 
 		; pitch lfo
-		alfo oscil 2.5,  0.15, gifnSine
-		kfreq += k(alfo)
+		alfo oscil 1.5,  0.75, gifnSine
+		;kfreq += k(alfo)
 
 		kpitchratio = (kfreq / cpsmidinn(ibasenote)) * ipitchratio
 
@@ -238,7 +238,7 @@ instr _fnmi_gchord1_notehold
 			endif
 
 			if (random:k(0, 1) > 0.95) then
-				kringmodmult = pow:k(2, round:k(random:k(-1, 2))) ; 3 up to 8
+				kringmodmult = pow:k(2, round:k(random:k(-1, 2))) ; 0.5 to 4
 			endif
 			
 			if (random:k(0, 1) > 0.9) then

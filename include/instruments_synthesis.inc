@@ -15,13 +15,13 @@
 /*
 	Bass note 1
 */
-instr fms_playnote
+instr note_bass1
 	index = (p4 == -1) ? random(0, 2) : p4
 	kfreq table index, gimel_freqs
 	kfreq *= 0.25
 	kamp table index, gimel_amps
 	kenv linseg 0, p3*0.01, 1, p3*0.99, 1
-	kamp *= kenv * 0.07
+	kamp *= kenv * 0.19
 
 	aphs1 phasor kfreq/2
 	aphs2 phasor kfreq/2
@@ -38,9 +38,15 @@ instr fms_playnote
 	aL butterlp aL, ilpfreq
 	aR butterlp aR, ilpfreq
 
+	if (random(0, 1) > 0.4) then
+		kamp *= abs:k(oscil:k(0.9, random(0.01, 0.1))) + 0.1
+	endif
+
 	bus_mix("reverb1", aL*kamp*0.7, aR*kamp*0.7)
 	bus_mix("master", aL*kamp, aR*kamp)
 endin
+
+
 
 
 opcode fmsxosc, a, k
@@ -63,7 +69,7 @@ opcode fmsxosc, a, k
 endop
 
 
-instr fms_playnote2
+instr note_bass2
 	index = p4 + 1
 	ifreq = cpsmidinn(tab_i(index, gimel_current_notes))
 
@@ -88,8 +94,12 @@ instr fms_playnote2
 
 	kenv linseg 0, p3*0.1, 1, p3*0.9, 0
 	
-	aL *= 0.15 * kenv
-	aR *= 0.15 * kenv
+	if (random(0, 1) > 0.4) then
+		kenv *= abs:k(oscil:k(0.9, random(0.01, 0.1))) + 0.1
+	endif
+
+	aL *= 0.19 * kenv
+	aR *= 0.19 * kenv
 	
 	bus_mix("master", aL, aR)
 endin

@@ -75,18 +75,20 @@ endin
 instr global_pvsamp1 
 	aL, aR bus_read "pvsamp1"
 	ir = 512
+	iscales[] fillarray 0.25, 0.5, 1, 2, 4
 	ksampling init 1
 	ktime = timeinsts()
 	ksamplestarttime init 0
 	kplaystarttime init 0
-	imaxlength = 5
+	imaxlength = 6
 	ksamplelength init random(2, imaxlength)
 	kplaylength init random(2, imaxlength)
 	krevsend init random(0, 0.4)
 	kdotune init (random(0, 1) > 0.8) ? 1 : 0
 	kdohpf init round(random(0, 1))
 	khpfreq init random(100, 2000)
-	kreadrate init random(0.01, 0.3)
+	kreadrate init random(0.005, 0.3)
+	kscale init iscales[round(random(0, lenarray(iscales) - 1))]
 	
 	if (ksampling == 1) then
 		fL1 pvsanal aL, ir, ir/4, ir, 1
@@ -103,7 +105,10 @@ instr global_pvsamp1
 			khpfreq = random:k(100, 2000)
 			kdotune = (random:k(0, 1) > 0.8) ? 1 : 0
 			krevsend = random:k(0, 0.6)
-			kreadrate = random:k(0.01, 0.3)
+			kreadrate = random:k(0.005, 0.3)
+			if (random:k(0, 1) >= 0.7) then
+				kscale = iscales[round:k(random:k(0, lenarray(iscales) - 1))]
+			endif
 		endif
 	endif
 
@@ -114,15 +119,14 @@ instr global_pvsamp1
 	endif
 
 	ktime = abs:k(oscil:k(1, kreadrate))
-	;ktime = portk(random:k(0, 1), 5)
 
-	iscales[] fillarray 0.25, 0.5, 1, 2, 4
-	iscale = iscales[round(random(0, lenarray(iscales) - 1))]
+	kplaylengthp = port(kplaylength, 0.1)
+	fL2 pvsbufread ktime*kplaylengthp, ibufL
+	fR2 pvsbufread ktime*kplaylengthp, ibufR
 
-	fL2 pvsbufread ktime*port(kplaylength, 0.1), ibufL
-	fR2 pvsbufread ktime*port(kplaylength, 0.1), ibufR
-	fL3 pvscale fL2, iscale
-	fR3 pvscale fR2, iscale
+	kscalep = port(kscale, 0.1)
+	fL3 pvscale fL2, kscalep
+	fR3 pvscale fR2, kscalep
 
 	aL pvsynth fL3
 	aR pvsynth fR3
@@ -132,80 +136,15 @@ instr global_pvsamp1
 	endif
 
 	if (kdohpf == 1) then
-		aL butterhp aL, khpfreq*random(0.8, 1.2)
-		aR butterhp aR, khpfreq*random(0.8, 1.2)
+		aL butterhp aL, khpfreq
+		aR butterhp aR, khpfreq
 	endif
 
 	bus_mix("reverb1", aL*krevsend, aR*krevsend)
 	bus_mix("master", aL, aR)
-
 endin
 
 
 
-/*
-	Cyclical PVS sampler
-*/
-instr global_pvsamp1x
-#ifdef DEBUG
-	prints sprintf("Reloaded %s\n", nstrstr(p1))
-#end
-	aL, aR bus_read "pvsamp1"
-	ir = 2048
-	ksampling init 1
-
-
-	ilength = random(2, max(p3*0.2, 2))
-	
-	if (ksampling == 1) then
-		fL1 pvsanal aL, ir, ir/4, ir, 1
-		fR1 pvsanal aR, ir, ir/4, ir, 1
-	
-		ibufL, ktL pvsbuffer fL1, ilength
-		ibufR, ktR pvsbuffer fR1, ilength
-
-		if (timeinsts() >= ilength) then
-			ksampling = 0
-		endif
-	endif
-
-
-	ktime = abs:k(oscil:k(1, random(0.01, 0.3)))
-	;ktime = portk(random:k(0, 1), 5)
-
-	iscales[] fillarray 0.25, 0.5, 1, 2, 4
-	iscale = iscales[round(random(0, lenarray(iscales) - 1))]
-
-	fL2 pvsbufread ktime*ilength, ibufL
-	fR2 pvsbufread ktime*ilength, ibufR
-	fL3 pvscale fL2, iscale
-	fR3 pvscale fR2, iscale
-
-	ilengthadj = p3 - ilength
-	kamp linseg 0, ilength, 0, ilengthadj*0.1, 1, ilengthadj*0.7, 1, ilengthadj*0.2, 0
-	aL pvsynth fL3
-	aR pvsynth fR3
-
-	if (random(0, 1) > 0.6) then
-		bus_mix("reverb1", aL, aR)
-	endif
-	
-	if (random(0, 1) > 0.7) then
-		aL, aR mel_tune_portamento aL*0.8, aR*0.8, gifnSine, 16, 1024, 4
-	endif
-
-	if (random(0, 1) > 0.6) then
-		ihpfreq random 100, 3000
-		aL butterhp aL, ihpfreq*random(0.8, 1.2)
-		aR butterhp aR, ihpfreq*random(0.8, 1.2)
-	endif
-
-	bus_mix("master", aL*kamp, aR*kamp)
-
-	; reload periodically
-	if (lastcycle() == 1) then
-		schedulek(p1, 1, random(3, 20))
-	endif 
-endin
 
 #end

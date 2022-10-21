@@ -55,21 +55,23 @@ opcode portchord_sound, aa, ippjo
 	
 
 	if (kamp != 0) then
-		atime = abs(oscil(iend - istart, random(0.001, 0.1), gifnSine, random(0, 1))) + istart
+		atime = abs(oscil(iend - istart, random(0.001, 0.1), gifnSine, random(0, 1)))
+
+		atime *= idur
 		klfo = oscil:k(random(0.0001, 0.009), random(1, 5)) + 1
 		kpitch *= klfo
-
 		if (imode == 0) then
 			kpitch *= (ftsr(ifn) / sr) ; adjustment for sndwarp required
 			
-			;apitch interp kpitch
-			aL, aR sndwarpst kamp, atime, kpitch, ifn, istart, 4410, 441, 8, gifnHalfSine, 1
-
+			; atime / 2???
+			aL, aR sndwarpst kamp, atime, interp(kpitch), ifn, istart, 4096, 128, 2, gifnHalfSine, 1
+			aL pareq aL, 90, 0.5, 0.6
+			aR pareq aR, 90, 0.5, 0.6
 		else
 			if (ichannels == 2) then
-				aL, aR mincer atime, kamp, kpitch, ifn, 0, ifftsize
+				aL, aR mincer atime+istart, kamp, kpitch, ifn, 0, ifftsize
 			else
-				aL mincer atime, kamp, kpitch, ifn, 0, ifftsize
+				aL mincer atime+istart, kamp, kpitch, ifn, 0, ifftsize
 				aR = aL
 			endif
 		endif
