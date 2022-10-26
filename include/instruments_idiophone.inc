@@ -7,7 +7,7 @@
 
 	Installation submission for the International Csound Conference 2022
 
-	Music box instruments
+	Idiophone instruments
 
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -177,7 +177,7 @@ endin
 
 
 /*
-	Stretch music box chord
+	Stretch idiophone box chord
 
 	p4		mode (0 = flipflop loop, 1 = linear loop)
 */
@@ -431,7 +431,7 @@ endin
 
 
 /*
-	Play music box note with stochastic transforms and sends
+	Play idiophone note with stochastic transforms and sends
 
 	p4		midi note number
 	p5		amplitude (0 to 1)
@@ -503,7 +503,7 @@ endin
 
 
 /*
-	Play music box note with stochastic transforms and sends
+	Play idiophone note with stochastic transforms and sends
 
 	p4		midi note number
 	p5		amplitude (0 to 1)
@@ -577,7 +577,7 @@ endin
 
 
 /*
-	Play held/stretched music box note with stochastic transforms and sends
+	Play held/stretched idiophone note with stochastic transforms and sends
 
 	p4		midi note number
 	p5		mode (0 = forwards and reverse, 1 = linear forwards)

@@ -2,6 +2,7 @@
 #define UDO_LAGDETECT ##
 /*
 	Processing lag detection
+	Slim excerpt for Partial Emergence
 
 	This file is part of the SONICS UDO collection by Richard Knight 2022
 		License: GPL-2.0-or-later
